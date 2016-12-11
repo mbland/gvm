@@ -92,6 +92,36 @@ compile_go() {
 		(rm -rf "$GO_INSTALL_ROOT" && display_fatal "Failed to compile. Check the logs at $GVM_ROOT/logs/go-$GO_NAME-compile.log")
 }
 
+apply_patches() {
+	cd "$GO_INSTALL_ROOT/src" ||
+		display_fatal "Couldn't cd into $GO_INSTALL_ROOT/src"
+
+	minor_version="${VERSION:0:5}"
+	patch_dir="$GVM_ROOT/patches"
+	patches=()
+
+	for patch_file in ${patch_dir}/${minor_version}/*.patch; do
+		if [ "$patch_file" != "${patch_dir}/${minor_version}*.patch" ]; then
+			patches+=("$patch_file")
+		fi
+	done
+
+	if [ -f "/etc/apk/repositories" ]; then
+		patch_file="${patch_dir}/alpine/${minor_version}/no-pic.patch"
+		if [ -f "$patch_file" ]; then
+		  patches+=("$patch_file")
+		fi
+	fi
+
+	for patch_file in "${patches[@]}"; do
+		display_message "Applying $patch_file..."
+		if ! patch -p2 <"$patch_file"; then
+			display_error "Failed to apply $patch_file"
+			return
+		fi
+	done
+}
+
 create_enviroment() {
 	new_env_file=$GVM_ROOT/environments/$GO_NAME
 	echo "export GVM_ROOT; GVM_ROOT=\"$GVM_ROOT\"" > "$new_env_file"
@@ -145,6 +175,7 @@ install_go() {
 
 	create_global_package_set
 	copy_source
+	apply_patches
 	compile_go
 	create_enviroment
 

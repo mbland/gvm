@@ -1,0 +1,15 @@
+diff --git a/src/cmd/ld/lib.c b/src/cmd/ld/lib.c
+--- a/src/cmd/ld/lib.c
++++ b/src/cmd/ld/lib.c
+@@ -692,6 +692,11 @@ hostlink(void) {
+ 		p = strchr(p + 1, ' ');
+ 	}
+
++	// The Go linker does not currently support building PIE
++	// executables when using the external linker. See:
++	// https://github.com/golang/go/issues/6940
++	argv[argc++] = "-fno-PIC";
++
+ 	argv[argc] = nil;
+
+ 	quotefmtinstall();
