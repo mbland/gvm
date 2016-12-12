@@ -93,33 +93,35 @@ compile_go() {
 }
 
 apply_patches() {
-	cd "$GO_INSTALL_ROOT/src" ||
-		display_fatal "Couldn't cd into $GO_INSTALL_ROOT/src"
+	cd "$GO_INSTALL_ROOT/src" || display_fatal "Can't access $GO_INSTALL_ROOT/src"
 
-	minor_version="${VERSION:0:5}"
-	patch_dir="$GVM_ROOT/patches"
-	patches=()
-
-	for patch_file in ${patch_dir}/${minor_version}/*.patch; do
-		if [ "$patch_file" != "${patch_dir}/${minor_version}*.patch" ]; then
-			patches+=("$patch_file")
-		fi
-	done
-
-	if [ -f "/etc/apk/repositories" ]; then
-		patch_file="${patch_dir}/alpine/${minor_version}/no-pic.patch"
-		if [ -f "$patch_file" ]; then
-		  patches+=("$patch_file")
-		fi
-	fi
-
-	for patch_file in "${patches[@]}"; do
+	for patch_file in $(list_patch_files "$VERSION"); do
 		display_message "Applying $patch_file..."
 		if ! patch -p2 <"$patch_file"; then
 			display_error "Failed to apply $patch_file"
 			return
 		fi
 	done
+}
+
+list_patch_files() {
+	patches_dir="$GVM_ROOT/patches"
+	version_patches_globpat="$(version_patches_dir "$1")/*.patch"
+	compgen -G "$patches_dir/$version_patches_globpat"
+	compgen -G "$patches_dir/$(platform_patches_dir)/$version_patches_globpat"
+}
+
+version_patches_dir() {
+	minor_version_and_patch_level="${1#*.}"
+	echo "${1%%.*}.${minor_version_and_patch_level%%.*}"
+}
+
+platform_patches_dir() {
+	if [ -f "/etc/apk/repositories" ]; then
+		echo "alpine"
+	else
+		echo "NONE"
+	fi
 }
 
 create_enviroment() {
