@@ -18,7 +18,7 @@ diff --git a/src/time/time_test.go b/src/time/time_test.go
 index 68236fd64d..2e47d0819d 100644
 --- a/src/time/time_test.go
 +++ b/src/time/time_test.go
-@@ -939,8 +939,11 @@ func TestLoadFixed(t *testing.T) {
+@@ -925,8 +925,11 @@ func TestLoadFixed(t *testing.T) {
  	// but Go and most other systems use "east is positive".
  	// So GMT+1 corresponds to -3600 in the Go zone, not +3600.
  	name, offset := Now().In(loc).Zone()
